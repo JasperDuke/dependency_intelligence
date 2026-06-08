@@ -31,7 +31,7 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         // Override on the host or via `pm2 start ... --update-env` if needed
-        PORT: 4010,
+        PORT: 4012,
       },
     },
     {
@@ -53,7 +53,7 @@ module.exports = {
       out_file: "./logs/pm2-out.log",
       env: {
         NODE_ENV: "production",
-        PORT: 3000,
+        PORT: 3015,
       },
     },
   ],
