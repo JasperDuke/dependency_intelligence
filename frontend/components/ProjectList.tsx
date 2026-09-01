@@ -17,6 +17,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
 } from '@mui/material';
 import { API_BASE } from '../lib/api';
 import EditProjectDialog from './EditProjectDialog';
@@ -42,6 +43,7 @@ export default function ProjectList({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [rescanningId, setRescanningId] = useState<string | null>(null);
   const [editProject, setEditProject] = useState<any | null>(null);
+  const [packageQuery, setPackageQuery] = useState('');
 
   const handleDelete = async (id: string, label: string) => {
     if (!window.confirm(`Delete “${label}”? This removes the project and its scan history from the tracker.`)) {
@@ -92,7 +94,7 @@ export default function ProjectList({
             bgcolor: 'background.paper',
             border: '1px solid',
             borderColor: 'divider',
-            borderRadius: 2,
+            borderRadius: 1,
             borderLeft: '4px solid',
             borderLeftColor: 'primary.dark',
           }}
@@ -102,7 +104,7 @@ export default function ProjectList({
               display: 'flex',
               flexDirection: { xs: 'column', md: 'row' },
               justifyContent: 'space-between',
-              alignItems: { xs: 'flex-start', md: 'flex-start' },
+              alignItems: { xs: 'flex-start', md: 'center' },
               gap: 2,
               p: { xs: 2.5, md: 3 },
               pb: 2,
@@ -128,7 +130,7 @@ export default function ProjectList({
                 </Box>
               </Typography>
             </Box>
-            <Stack direction="row" spacing={1} alignItems="center" flexShrink={0} flexWrap="wrap" useFlexGap>
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent={{ md: 'flex-end' }} flexShrink={0} flexWrap="wrap" useFlexGap>
               <Chip
                 label={proj.projectType === 'npm' ? 'npm' : 'Python'}
                 size="small"
@@ -172,165 +174,35 @@ export default function ProjectList({
             </Stack>
           </Box>
 
-          <Box sx={{ px: { xs: 1, md: 2 }, py: 2 }}>
-            <Typography variant="subtitle2" sx={{ px: { xs: 1, md: 2 }, mb: 1.5, fontWeight: 700, color: 'text.secondary' }}>
-              Dependency matrix
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', px: { xs: 1, md: 2 }, mb: 2, maxWidth: 960, lineHeight: 1.65 }}>
-              Scans use every <strong>enabled</strong> data source in Settings (OSV, npm Security API, Snyk with token).
-              Findings are <strong>merged</strong>; each row shows <strong>Sources</strong> chips and the combined
-              severity / fix text.
-              <br />
-              <strong>Vulnerable</strong> only if your pinned version satisfies the advisory’s range (npm uses{' '}
-              <Box component="span" sx={{ fontFamily: 'ui-monospace, monospace' }}>semver</Box>:{' '}
-              <Box component="span" sx={{ fontFamily: 'ui-monospace, monospace' }}>1.6.5</Box> is{' '}
-              <em>lower</em> than <Box component="span" sx={{ fontFamily: 'ui-monospace, monospace' }}>1.12.0</Box>, so it
-              can still fall inside <Box component="span" sx={{ fontFamily: 'ui-monospace, monospace' }}>{'>=1.0.0 <1.12.0'}</Box>
-              . Each finding lists the <strong>vulnerable versions</strong> range and your version for clarity. Use{' '}
-              <strong>Rescan</strong> for a fresh pass, re-upload, or wait for the scheduled scan.
-            </Typography>
-
-            <TableContainer
-              sx={{
-                maxHeight: 480,
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1,
-                bgcolor: 'rgba(0,0,0,0.2)',
-              }}
-            >
-              <Table size="small" stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: 'rgba(26,26,32,0.98)', borderColor: 'divider' }}>
-                      Package
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: 'rgba(26,26,32,0.98)', borderColor: 'divider', width: 140 }}>
-                      Your version
-                    </TableCell>
-                    <TableCell
-                      align="right"
-                      sx={{ fontWeight: 700, bgcolor: 'rgba(26,26,32,0.98)', borderColor: 'divider', width: 160 }}
-                    >
-                      Status
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {proj.packages?.map((pkg: any) => (
-                    <TableRow
-                      key={`${proj._id}-${pkg.name}`}
-                      hover
-                      sx={{ '&:last-child td': { borderBottom: 0 }, verticalAlign: 'top' }}
-                    >
-                      <TableCell sx={{ borderColor: 'divider', py: 2, maxWidth: { xs: 200, md: 'none' } }}>
-                        <Typography fontWeight={700} sx={{ wordBreak: 'break-word' }}>
-                          {pkg.name}
-                        </Typography>
-                        {pkg.vulnerable &&
-                          pkg.vulnerabilities?.map((v: any, i: number) => (
-                            <Box
-                              key={`${v.id}-${i}`}
-                              sx={{
-                                mt: 1.5,
-                                p: 1.5,
-                                borderRadius: 1,
-                                bgcolor: 'rgba(211,47,47,0.1)',
-                                border: '1px solid',
-                                borderColor: 'error.dark',
-                              }}
-                            >
-                              <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center" sx={{ mb: 0.5 }}>
-                                {v.severity ? (
-                                  <Chip
-                                    label={v.severity}
-                                    size="small"
-                                    color={severityColor(v.severity) as 'error' | 'warning' | 'info' | 'default'}
-                                    sx={{ height: 22, fontSize: '0.65rem', fontWeight: 700 }}
-                                  />
-                                ) : null}
-                                {v.sources?.map((s: string) => (
-                                  <Chip
-                                    key={s}
-                                    label={s}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{ height: 22, fontSize: '0.65rem' }}
-                                  />
-                                ))}
-                              </Stack>
-                              <Typography variant="caption" color="text.secondary" display="block">
-                                {v.id}
-                                {v.published ? ` · ${new Date(v.published).toLocaleDateString()}` : ''}
-                              </Typography>
-                              <Typography variant="body2" sx={{ mt: 0.75, lineHeight: 1.55 }}>
-                                {v.summary}
-                              </Typography>
-                              {v.affectedRange ? (
-                                <Box
-                                  sx={{
-                                    mt: 1.25,
-                                    p: 1,
-                                    borderRadius: 1,
-                                    bgcolor: 'rgba(0,0,0,0.25)',
-                                    border: '1px solid',
-                                    borderColor: 'rgba(255,255,255,0.08)',
-                                  }}
-                                >
-                                  <Typography variant="caption" color="text.secondary" display="block" sx={{ fontWeight: 600 }}>
-                                    Vulnerable versions (from advisory)
-                                  </Typography>
-                                  <Typography
-                                    variant="body2"
-                                    sx={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', mt: 0.5, wordBreak: 'break-word' }}
-                                  >
-                                    {v.affectedRange}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, lineHeight: 1.5 }}>
-                                    Your version <Box component="span" sx={{ fontFamily: 'ui-monospace, monospace', color: 'text.primary' }}>{pkg.version}</Box> is included in this range — that is why this row is marked vulnerable.
-                                  </Typography>
-                                </Box>
-                              ) : null}
-                              <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.08)' }} />
-                              <Typography variant="body2" sx={{ color: 'warning.light' }}>
-                                <strong>Upgrade to (non-vulnerable):</strong> {v.fixedVersion}
-                              </Typography>
-                            </Box>
-                          ))}
-                        {!pkg.vulnerable && pkg.hasHistoricBreach && (
-                          <Typography variant="caption" color="warning.light" sx={{ display: 'block', mt: 1, lineHeight: 1.5 }}>
-                            {pkg.historicBreachCount} historical advisories exist for this package name —{' '}
-                            <strong>your version is outside the vulnerable ranges</strong> we evaluated.
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell sx={{ borderColor: 'divider', fontFamily: 'ui-monospace, monospace', fontSize: '0.85rem' }}>
-                        {pkg.version}
-                      </TableCell>
-                      <TableCell align="right" sx={{ borderColor: 'divider' }}>
-                        <Chip
-                          label={
-                            pkg.vulnerable ? 'Vulnerable' : pkg.hasHistoricBreach ? 'Safe · context' : 'Safe'
-                          }
-                          size="small"
-                          sx={{
-                            height: 26,
-                            fontSize: '0.72rem',
-                            fontWeight: 800,
-                            bgcolor: pkg.vulnerable
-                              ? 'error.dark'
-                              : pkg.hasHistoricBreach
-                                ? 'rgba(237,108,2,0.35)'
-                                : 'success.dark',
-                            color: '#fff',
-                          }}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+          <Box sx={{ px: { xs: 1, md: 2 }, py: 2.5 }}>
+            {(() => {
+              const packages = proj.packages || [];
+              const vulnerableCount = packages.filter((pkg: any) => pkg.vulnerable).length;
+              const contextualCount = packages.filter((pkg: any) => !pkg.vulnerable && pkg.hasHistoricBreach).length;
+              const filteredPackages = packages.filter((pkg: any) => pkg.name.toLowerCase().includes(packageQuery.trim().toLowerCase()));
+              return <>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, px: { xs: 1, md: 2 }, mb: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                  <Box><Typography variant="subtitle2" sx={{ fontWeight: 800, letterSpacing: '0.04em' }}>DEPENDENCY INVENTORY</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: 0.4 }}>{packages.length} package{packages.length === 1 ? '' : 's'} scanned · findings are matched to your pinned versions.</Typography></Box>
+                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap"><Chip label={`${vulnerableCount} need${vulnerableCount === 1 ? 's' : ''} attention`} size="small" color={vulnerableCount ? 'error' : 'success'} variant={vulnerableCount ? 'filled' : 'outlined'} sx={{ fontWeight: 700 }} />{contextualCount > 0 && <Chip label={`${contextualCount} historical`} size="small" variant="outlined" color="warning" sx={{ fontWeight: 700 }} />}</Stack>
+                </Box>
+                <Box sx={{ px: { xs: 1, md: 2 }, mb: 2 }}><TextField size="small" fullWidth value={packageQuery} onChange={(event) => setPackageQuery(event.target.value)} placeholder="Filter packages by name" slotProps={{ input: { 'aria-label': 'Filter packages by name' } }} sx={{ maxWidth: 420, '& .MuiOutlinedInput-root': { bgcolor: 'rgba(0,0,0,0.18)' } }} /></Box>
+                <TableContainer sx={{ maxHeight: 520, border: '1px solid', borderColor: 'divider', borderRadius: 1, bgcolor: 'rgba(0,0,0,0.16)' }}>
+                  <Table size="small" stickyHeader aria-label={`${proj.title || proj.name} dependency inventory`}>
+                    <TableHead><TableRow><TableCell sx={{ fontWeight: 800, letterSpacing: '0.04em', fontSize: '0.7rem', bgcolor: 'rgba(26,26,32,0.98)', borderColor: 'divider' }}>PACKAGE</TableCell><TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, fontWeight: 800, letterSpacing: '0.04em', fontSize: '0.7rem', bgcolor: 'rgba(26,26,32,0.98)', borderColor: 'divider', width: 160 }}>PINNED VERSION</TableCell><TableCell align="right" sx={{ display: { xs: 'none', sm: 'table-cell' }, fontWeight: 800, letterSpacing: '0.04em', fontSize: '0.7rem', bgcolor: 'rgba(26,26,32,0.98)', borderColor: 'divider', width: 170 }}>ASSESSMENT</TableCell></TableRow></TableHead>
+                    <TableBody>{filteredPackages.map((pkg: any) => {
+                      const statusLabel = pkg.vulnerable ? 'Action needed' : pkg.hasHistoricBreach ? 'Historical context' : 'Clear';
+                      const statusColor = pkg.vulnerable ? 'error.dark' : pkg.hasHistoricBreach ? 'rgba(237,108,2,0.35)' : 'success.dark';
+                      return <TableRow key={`${proj._id}-${pkg.name}`} hover sx={{ '&:last-child td': { borderBottom: 0 }, verticalAlign: 'top', '&:hover': { bgcolor: 'rgba(126,87,194,0.045)' } }}>
+                        <TableCell sx={{ borderColor: 'divider', py: 2, maxWidth: { xs: 200, md: 'none' } }}><Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}><Box sx={{ minWidth: 0 }}><Typography fontWeight={800} sx={{ wordBreak: 'break-word' }}>{pkg.name}</Typography><Typography sx={{ display: { xs: 'block', sm: 'none' }, mt: 0.4, fontFamily: 'ui-monospace, monospace', fontSize: '0.76rem', color: 'text.secondary' }}>v{pkg.version}</Typography></Box><Chip label={statusLabel} size="small" sx={{ display: { xs: 'flex', sm: 'none' }, height: 23, fontSize: '0.62rem', fontWeight: 800, bgcolor: statusColor, color: '#fff', flexShrink: 0 }} /></Stack>
+                        {pkg.vulnerable && pkg.vulnerabilities?.map((v: any, i: number) => <Box key={`${v.id}-${i}`} sx={{ mt: 1.5, p: { xs: 1.25, sm: 1.5 }, borderRadius: 1.5, bgcolor: 'rgba(211,47,47,0.1)', border: '1px solid', borderColor: 'error.dark' }}><Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center" sx={{ mb: 0.75 }}>{v.severity && <Chip label={v.severity} size="small" color={severityColor(v.severity) as 'error' | 'warning' | 'info' | 'default'} sx={{ height: 22, fontSize: '0.65rem', fontWeight: 800 }} />}{v.sources?.map((source: string) => <Chip key={source} label={source} size="small" variant="outlined" sx={{ height: 22, fontSize: '0.65rem' }} />)}</Stack><Typography variant="caption" color="text.secondary" display="block">{v.id}{v.published ? ` · ${new Date(v.published).toLocaleDateString()}` : ''}</Typography><Typography variant="body2" sx={{ mt: 0.75, lineHeight: 1.55 }}>{v.summary}</Typography>{v.affectedRange && <Box sx={{ mt: 1.25, p: 1, borderRadius: 1, bgcolor: 'rgba(0,0,0,0.22)' }}><Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>AFFECTED RANGE</Typography><Typography variant="body2" sx={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', mt: 0.35, wordBreak: 'break-word' }}>{v.affectedRange}</Typography></Box>}<Typography variant="body2" sx={{ mt: 1.25, color: 'warning.light' }}><strong>Upgrade to:</strong> {v.fixedVersion}</Typography></Box>)}
+                        {!pkg.vulnerable && pkg.hasHistoricBreach && <Typography variant="caption" color="warning.light" sx={{ display: 'block', mt: 1, lineHeight: 1.5 }}>{pkg.historicBreachCount} historical advisories exist, but your pinned version is outside the affected ranges.</Typography>}</TableCell>
+                        <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, borderColor: 'divider', fontFamily: 'ui-monospace, monospace', fontSize: '0.85rem', color: 'text.secondary' }}>{pkg.version}</TableCell><TableCell align="right" sx={{ display: { xs: 'none', sm: 'table-cell' }, borderColor: 'divider' }}><Chip label={statusLabel} size="small" sx={{ height: 26, fontSize: '0.7rem', fontWeight: 800, bgcolor: statusColor, color: '#fff' }} /></TableCell>
+                      </TableRow>;
+                    })}{filteredPackages.length === 0 && <TableRow><TableCell colSpan={3} sx={{ py: 5, textAlign: 'center', color: 'text.secondary' }}>No packages match “{packageQuery}”.</TableCell></TableRow>}</TableBody>
+                  </Table>
+                </TableContainer>
+              </>;
+            })()}
           </Box>
         </Paper>
       ))}

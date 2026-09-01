@@ -7,6 +7,7 @@ import {
   Paper,
   Typography,
   CircularProgress,
+  Button,
   Select,
   MenuItem,
   Chip,
@@ -29,29 +30,32 @@ export default function SearchBar() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
 
-  const handleSearch = async (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && query.trim()) {
-      setLoading(true);
-      try {
-        const res = await axios.get(
-          `${API_BASE}/api/search?name=${encodeURIComponent(query.trim())}&ecosystem=${ecosystem}`
-        );
-        setResult(res.data.status);
-      } catch (err) {
-        console.error(err);
-        setResult(null);
-      } finally {
-        setLoading(false);
-      }
+  const runSearch = async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    try {
+      const res = await axios.get(
+        `${API_BASE}/api/search?name=${encodeURIComponent(query.trim())}&ecosystem=${ecosystem}`
+      );
+      setResult(res.data.status);
+    } catch (err) {
+      console.error(err);
+      setResult(null);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleSearch = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') void runSearch();
   };
 
   return (
     <Box sx={{ width: '100%', mb: 2 }}>
-      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-        Quick lookup
+      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1, fontWeight: 700, letterSpacing: '0.03em' }}>
+        LOOK UP A PACKAGE
       </Typography>
-      <Box sx={{ display: 'flex', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
         <Select
           value={ecosystem}
           onChange={(e) => setEcosystem(e.target.value as string)}
@@ -64,7 +68,7 @@ export default function SearchBar() {
         <TextField
           fullWidth
           size="small"
-          placeholder="Package name, then Enter (e.g. lodash)"
+          placeholder="Package name (e.g. lodash)"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleSearch}
@@ -73,8 +77,16 @@ export default function SearchBar() {
               endAdornment: loading ? <CircularProgress size={20} /> : null,
             },
           }}
-          sx={{ flex: 1, minWidth: 200, '& .MuiOutlinedInput-root': { bgcolor: 'rgba(0,0,0,0.2)' } }}
+          sx={{ flex: 1, minWidth: 200, '& .MuiOutlinedInput-root': { bgcolor: 'rgba(0,0,0,0.3)' } }}
         />
+        <Button
+          variant="contained"
+          onClick={() => void runSearch()}
+          disabled={loading || !query.trim()}
+          sx={{ px: 2.5, background: 'linear-gradient(110deg, #7E57C2, #42a5f5)' }}
+        >
+          Check package
+        </Button>
       </Box>
 
       {result && (
