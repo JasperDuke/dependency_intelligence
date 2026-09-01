@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Chip } from '@mui/material';
 
 export default function AppHeader({ onOpenSettings }: { onOpenSettings: () => void }) {
   const pathname = usePathname();
@@ -26,7 +26,7 @@ export default function AppHeader({ onOpenSettings }: { onOpenSettings: () => vo
         borderColor: 'divider',
       }}
     >
-      <Toolbar sx={{ maxWidth: 1200, width: '100%', mx: 'auto', px: { xs: 2, sm: 3 } }}>
+      <Toolbar sx={{ maxWidth: 1280, minHeight: { xs: 64, sm: 72 }, width: '100%', mx: 'auto', px: { xs: 2, sm: 3 } }}>
         <Typography
           variant="h6"
           component={Link}
@@ -38,12 +38,12 @@ export default function AppHeader({ onOpenSettings }: { onOpenSettings: () => vo
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             textDecoration: 'none',
-            mr: 4,
+            mr: { xs: 2, sm: 4 },
           }}
         >
-          Nexus Security
+          Nexus
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2, flexGrow: 1 }}>
+        <Box sx={{ display: 'flex', gap: { xs: 1.5, sm: 2.5 }, flexGrow: 1 }}>
           <Typography component={Link} href="/" sx={linkSx(pathname === '/')}>
             Home
           </Typography>
@@ -51,6 +51,7 @@ export default function AppHeader({ onOpenSettings }: { onOpenSettings: () => vo
             Tracked projects
           </Typography>
         </Box>
+        <Chip label="SECURITY DESK" size="small" sx={{ display: { xs: 'none', md: 'flex' }, mr: 2, color: 'text.secondary', border: '1px solid', borderColor: 'divider', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.08em' }} />
         <Button
           variant="outlined"
           size="small"
